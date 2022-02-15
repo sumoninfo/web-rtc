@@ -1,15 +1,15 @@
 const app    = require('express')();
 const server = require('http').createServer(app);
-const cros   = require('cors');
+const cors = require("cors");
 
-const io = require('socket.io')(server, {
-    cros: {
-        origin : '*',
-        methods: ["GET", "POST"]
+const io = require("socket.io")(server, {
+    cors: {
+        origin: "*",
+        methods: [ "GET", "POST" ]
     }
 });
 
-app.use(cros());
+app.use(cors());
 
 const PORT = process.env.PORT || 5000;
 
@@ -27,6 +27,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('callUser', ({userToCall, signalData, from, name}) => {
+        console.log(userToCall, signalData, from, name, 'aaadsdd')
         io.to(userToCall).emit('callUser', {signal: signalData, from, name});
     });
 
