@@ -51,18 +51,16 @@
                             </div>
                         </li>
                     </ol>
-                    <input placeholder="Enter username..."
-                           type="text"
-                           id="username-input" /><br>
-                    <button onclick="joinCall()">Join Call</button>
-
-                    <button class="d-none1" onclick="startCall()">Start Call</button>
-                    <button class="d-none1" onclick="joinCall()">Join Call</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<input type="text" placeholder="Enter username..." id="username-input"><br>
+<button onclick="sendUsername()" type="button">Send</button>
+<button onclick="startCall()" type="button">Start Call</button>
+<button onclick="joinCall()">Join Call</button>
 <div id="video-call-div">
     <video muted id="local-video" autoplay></video>
     <video id="remote-video" autoplay></video>

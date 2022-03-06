@@ -18,24 +18,13 @@ function handleSignallingData(data) {
     }
 }
 
-let phone = localStorage.getItem('phone');
-if (phone) {
-    console.log(phone)
-    document.getElementById("user-form").style.display         = "none"
-    document.getElementById("contact-list-view").style.display = "block"
-} else {
-    // document.getElementById("contact-list-view").style.display = "block"
-}
+let phone
 
-function sendUsername(e) {
-    e.preventDefault();
-    phone = document.getElementById("phone").value
-    name  = document.getElementById("name").value
-
-    setLocalstorageData(name, phone)
+const sendUsername = () => {
+    phone = document.getElementById('username-input').value;
     sendData({
-        type: "store_user"
-    })
+        type: 'store_user'
+    });
 }
 
 const setLocalstorageData = (name, phone) => {
@@ -45,10 +34,6 @@ const setLocalstorageData = (name, phone) => {
     localStorage.setItem('phone', phone)
 }
 
-const getLocalStorageData = () => {
-    let newObject = window.localStorage.getItem("user");
-    return JSON.parse(newObject);
-}
 
 function createAndSendAnswer() {
     peerConn.createAnswer((answer) => {
@@ -62,23 +47,27 @@ function createAndSendAnswer() {
 }
 
 function sendData(data) {
-    console.log(data, 'data')
+    console.log(data, 'sendData')
+    data.phone = phone
+    data.name  = name
     webSocket.send(JSON.stringify(data))
 }
 
 let localStream
 let peerConn
 
-function startCall() {
+async function startCall() {
     document.getElementById("video-call-div").style.display = "inline"
 
-    navigator.getUserMedia({
-        video   : {
-            frameRate     : 24, width: {
-                min: 480, ideal: 720, max: 1280
-            }, aspectRatio: 1.33333
-        }, audio: true
-    }, (stream) => {
+    let stream = null;
+    try {
+        stream                                           = await navigator.mediaDevices.getUserMedia({
+            video   : {
+                frameRate     : 24, width: {
+                    min: 480, ideal: 720, max: 1280
+                }, aspectRatio: 1.33333
+            }, audio: true
+        });
         localStream                                      = stream
         document.getElementById("local-video").srcObject = localStream
 
@@ -102,33 +91,33 @@ function startCall() {
         peerConn.onicecandidate = ((e) => {
             if (e.candidate == null) return
             sendData({
-                phone    : localStorage.getItem('phone'),
-                name     : localStorage.getItem('phone'),
-                type     : "store_candidate",
-                candidate: e.candidate
+                type: "store_candidate", candidate: e.candidate
             })
         })
 
         createAndSendOffer()
-    }, (error) => {
-        console.log(error)
-    })
+    } catch (err) {
+        console.log(err, 'err')
+    }
 }
 
-function joinCall(phone) {
+async function joinCall() {
 
-    //phone = localStorage.getItem('phone')
     phone = document.getElementById('username-input').value;
 
     document.getElementById("video-call-div").style.display = "inline"
 
-    navigator.getUserMedia({
-        video   : {
-            frameRate     : 24, width: {
-                min: 480, ideal: 720, max: 1280
-            }, aspectRatio: 1.33333
-        }, audio: true
-    }, (stream) => {
+    let stream = null;
+
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({
+            video   : {
+                frameRate     : 24, width: {
+                    min: 480, ideal: 720, max: 1280
+                }, aspectRatio: 1.33333
+            }, audio: true
+        });
+
         localStream                                      = stream
         document.getElementById("local-video").srcObject = localStream
 
@@ -153,31 +142,22 @@ function joinCall(phone) {
             if (e.candidate == null) return
 
             sendData({
-                phone    : phone,
-                name     : phone,
-                type     : "send_candidate",
-                candidate: e.candidate
+                type: "send_candidate", candidate: e.candidate
             })
         })
 
         sendData({
-            phone: phone,
-            name : phone,
-            type : "join_call"
+            type: "join_call"
         })
-
-    }, (error) => {
-        console.log(error)
-    })
+    } catch (err) {
+        console.log(err, 'err')
+    }
 }
 
 function createAndSendOffer() {
     peerConn.createOffer((offer) => {
         sendData({
-            phone: localStorage.getItem('phone'),
-            name : localStorage.getItem('phone'),
-            type : "store_offer",
-            offer: offer
+            type: "store_offer", offer: offer
         })
 
         peerConn.setLocalDescription(offer)
