@@ -18,22 +18,43 @@ function handleSignallingData(data) {
     }
 }
 
-let username
+let phone = localStorage.getItem('phone');
+if (phone) {
+    console.log(phone)
+    document.getElementById("user-form").style.display         = "none"
+    document.getElementById("contact-list-view").style.display = "block"
+} else {
+    // document.getElementById("contact-list-view").style.display = "block"
+}
 
-function sendUsername() {
+function sendUsername(e) {
+    e.preventDefault();
+    phone = document.getElementById("phone").value
+    name  = document.getElementById("name").value
 
-    username = document.getElementById("username-input").value
+    setLocalstorageData(name, phone)
     sendData({
         type: "store_user"
     })
+}
+
+const setLocalstorageData = (name, phone) => {
+    localStorage.setItem('user', JSON.stringify({
+        name, phone
+    }))
+    localStorage.setItem('phone', phone)
+}
+
+const getLocalStorageData = () => {
+    let newObject = window.localStorage.getItem("user");
+    return JSON.parse(newObject);
 }
 
 function createAndSendAnswer() {
     peerConn.createAnswer((answer) => {
         peerConn.setLocalDescription(answer)
         sendData({
-            type  : "send_answer",
-            answer: answer
+            type: "send_answer", answer: answer
         })
     }, error => {
         console.log(error)
@@ -41,7 +62,7 @@ function createAndSendAnswer() {
 }
 
 function sendData(data) {
-    data.username = username
+    console.log(data, 'data')
     webSocket.send(JSON.stringify(data))
 }
 
@@ -49,18 +70,14 @@ let localStream
 let peerConn
 
 function startCall() {
-    document.getElementById("video-call-div")
-        .style.display = "inline"
+    document.getElementById("video-call-div").style.display = "inline"
 
     navigator.getUserMedia({
-        video: {
-            frameRate  : 24,
-            width      : {
+        video   : {
+            frameRate     : 24, width: {
                 min: 480, ideal: 720, max: 1280
-            },
-            aspectRatio: 1.33333
-        },
-        audio: true
+            }, aspectRatio: 1.33333
+        }, audio: true
     }, (stream) => {
         localStream                                      = stream
         document.getElementById("local-video").srcObject = localStream
@@ -69,9 +86,7 @@ function startCall() {
             iceServers: [
                 {
                     "urls": [
-                        "stun:stun.l.google.com:19302",
-                        "stun:stun1.l.google.com:19302",
-                        "stun:stun2.l.google.com:19302"
+                        "stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"
                     ]
                 }
             ]
@@ -81,14 +96,14 @@ function startCall() {
         peerConn.addStream(localStream)
 
         peerConn.onaddstream = (e) => {
-            document.getElementById("remote-video")
-                .srcObject = e.stream
+            document.getElementById("remote-video").srcObject = e.stream
         }
 
         peerConn.onicecandidate = ((e) => {
-            if (e.candidate == null)
-                return
+            if (e.candidate == null) return
             sendData({
+                phone    : localStorage.getItem('phone'),
+                name     : localStorage.getItem('phone'),
                 type     : "store_candidate",
                 candidate: e.candidate
             })
@@ -100,22 +115,19 @@ function startCall() {
     })
 }
 
-function joinCall() {
+function joinCall(phone) {
 
-    username = document.getElementById("username-input").value
+    //phone = localStorage.getItem('phone')
+    phone = document.getElementById('username-input').value;
 
-    document.getElementById("video-call-div")
-        .style.display = "inline"
+    document.getElementById("video-call-div").style.display = "inline"
 
     navigator.getUserMedia({
-        video: {
-            frameRate  : 24,
-            width      : {
+        video   : {
+            frameRate     : 24, width: {
                 min: 480, ideal: 720, max: 1280
-            },
-            aspectRatio: 1.33333
-        },
-        audio: true
+            }, aspectRatio: 1.33333
+        }, audio: true
     }, (stream) => {
         localStream                                      = stream
         document.getElementById("local-video").srcObject = localStream
@@ -124,9 +136,7 @@ function joinCall() {
             iceServers: [
                 {
                     "urls": [
-                        "stun:stun.l.google.com:19302",
-                        "stun:stun1.l.google.com:19302",
-                        "stun:stun2.l.google.com:19302"
+                        "stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"
                     ]
                 }
             ]
@@ -136,22 +146,24 @@ function joinCall() {
         peerConn.addStream(localStream)
 
         peerConn.onaddstream = (e) => {
-            document.getElementById("remote-video")
-                .srcObject = e.stream
+            document.getElementById("remote-video").srcObject = e.stream
         }
 
         peerConn.onicecandidate = ((e) => {
-            if (e.candidate == null)
-                return
+            if (e.candidate == null) return
 
             sendData({
+                phone    : phone,
+                name     : phone,
                 type     : "send_candidate",
                 candidate: e.candidate
             })
         })
 
         sendData({
-            type: "join_call"
+            phone: phone,
+            name : phone,
+            type : "join_call"
         })
 
     }, (error) => {
@@ -162,6 +174,8 @@ function joinCall() {
 function createAndSendOffer() {
     peerConn.createOffer((offer) => {
         sendData({
+            phone: localStorage.getItem('phone'),
+            name : localStorage.getItem('phone'),
             type : "store_offer",
             offer: offer
         })
